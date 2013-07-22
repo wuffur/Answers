@@ -31,8 +31,8 @@ main(void)
         t[0].t = 1; t[1].t = 2;
         l4_timeout_t tmout = l4_timeout(t[0],t[1]);
 
-  
-        ret = l4_ipc_send(env->log, l4_utcb(), tag,tmout); //System Call!
+   
+        ret = l4_ipc_send(env->log, l4_utcb(), tag, tmout); //System Call!
                          
                              
                              
