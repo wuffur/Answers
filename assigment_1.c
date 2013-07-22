@@ -42,7 +42,7 @@ main(void)
         l4_uint32_t err;
         if (err = l4_msgtag_has_error(ret)) {
                 //error handling
-                fprintf(stderr,"Error has occured");
+                fprintf(stderr,"Error has occured \n");
                 //printf("Error has occured %i\n", err);
                 return 1;
         }
