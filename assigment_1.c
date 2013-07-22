@@ -42,6 +42,7 @@ main(void)
                 printf(stderr, "Error has occured %i\n", err);
                 return 1;
         }
+        free(mr);
         return 0;
 }
                      
