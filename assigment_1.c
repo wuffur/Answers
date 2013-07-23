@@ -1,16 +1,10 @@
-/***
-** Not working currently
-***/
 #include <l4/re/env.h>
 #include <l4/sys/ipc.h>
 #include <l4/sys/vcon.h>
-//#include <l4/sys/memdesc.h>
-#include <l4/re/c/namespace.h>
-#include <l4/re/c/util/cap_alloc.h>
 
-#include <string.h>
-#include <unistd.h>
-#include <stdio.h>
+/** #include <string.h>
+**  #include <unistd.h>
+**  #include <stdio.h>  */
 
 int
 main(void)
@@ -26,14 +20,14 @@ main(void)
        
         l4_msgtag_t tag, ret;
         tag = l4_msgtag(L4_PROTO_LOG, 4, /* 4 msg words */
-                            0, L4_IPC_NEVER);      
+                            0, 0);      
         
         l4_timeout_s t[2];
         t[0].t = 1; t[1].t = 2;
         l4_timeout_t tmout = l4_timeout(t[0], t[1]);
 
    
-        ret = l4_ipc_send(env->log, l4_utcb(), tag, tmout); //System Call!
+        ret = l4_ipc_send(env->log, l4_utcb(), tag, L4_IPC_NEVER); //System Call!
                          
         while(1){                             
         l4_uint32_t err;
@@ -43,7 +37,7 @@ main(void)
                 //printf("Error has occured %i\n", err);
                 return 1;
         }
-        continue;
+        sleep(1);
         }
         return 0;
 }
