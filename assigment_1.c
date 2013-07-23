@@ -23,7 +23,7 @@ main(void)
         mr->mr[0] = L4_VCON_WRITE_OP;
         mr->mr[1] = 7; // 'hello\n = 6 chars + \0 char
         memcpy(&mr->mr[2], "hello\n",7);
-
+        while(1){
         l4_msgtag_t tag, ret;
         tag = l4_msgtag(L4_PROTO_LOG, 4, /* 4 msg words */
                             0, L4_IPC_NEVER);      
@@ -46,7 +46,7 @@ main(void)
                 //printf("Error has occured %i\n", err);
                 return 1;
         }
-        free(mr);
+        }
         return 0;
 }
                      
