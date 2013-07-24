@@ -1,117 +1,112 @@
-
+/*
+ * (c) 2008-2009 Adam Lackorzynski <adam@os.inf.tu-dresden.de>,
+ *               Alexander Warg <warg@os.inf.tu-dresden.de>
+ *     economic rights: Technische Universität Dresden (Germany)
+ *
+ * This file is part of TUD:OS and distributed under the terms of the
+ * GNU General Public License 2.
+ * Please see the COPYING-GPL-2 file for details.
+ */
 #include <stdio.h>
 #include <l4/re/env>
 #include <l4/re/util/cap_alloc>
 #include <l4/re/util/object_registry>
 #include <l4/cxx/ipc_server>
+#include <ctype.h>
 
 #include "shared.h"
 
-
 static L4Re::Util::Registry_server<> server;
 
-class Encryption_server : public L4::Server_object {
-
+class Encryption_server : public L4::Server_object
+{
 public:
-int dispatch(l4_umword_t obj, L4::Ipc::Iostream &ios);
-
+  int dispatch(l4_umword_t obj, L4::Ipc::Iostream &ios);
 private:
-int dispatch_encrypt(L4::Ipc::Iostream &ios);
-int dispatch_decrypt(L4::Ipc::Iostream &ios);
+ static int encrypt(char *buffer, unsigned long buffer_size);
+ static int decrypt(char *buffer, unsigned long buffer_size);
+ static char backverse(const char c);
 
-int encrypt(unsigned char *inout_data, unsigned long size);
-int decrypt(unsigned char *inout_data, unsigned long size);
-unsigned char key();
 };
 
-int Encryption_server::dispatch_encrypt(L4::Ipc::Iostream &ios) {
+int
+Encryption_server::dispatch(l4_umword_t, L4::Ipc::Iostream &ios)
+{
+  l4_msgtag_t t;
+  ios >> t;
 
-unsigned char *buf = NULL;
-unsigned long buf_len = 0;
-
-ios >> L4::Ipc::Buf_in<unsigned char>(buf, buf_len);
-if(buf_len > (L4_UTCB_GENERIC_DATA_SIZE-2)*sizeof(l4_umword_t))
-return -L4_EBADPROTO;
-int ret = encrypt(buf, buf_len);
-if(ret != L4_EOK)
-return ret;
-ios << L4::Ipc::Buf_cp_out<unsigned char>(buf, buf_len); // XXX depends on << implementation
-return ret;
+  // We're only talking the calculation protocol
+  if (t.label() != Protocol::Encryption)
+    return -L4_EBADPROTO;
+  L4 :: Opcode opcode;
+  ios >> opcode;
+  int retrun;
+  char *buffer = NULL;
+  unsigned long buffer_size = 0;
+  switch (opcode)
+    {
+    case Opcode::func_encrypt:
+      ios >> L4::Ipc::buf_cp_in(buffer, buffer_size);
+      retrun = encrypt(buffer, buffer_size);
+      if(retrun != L4_EOK)
+     return retrun;
+      ios << L4::Ipc::buf_cp_out(buffer, buffer_size);
+      return L4_EOK;
+    case Opcode::func_decrypt:
+      ios >> L4::Ipc::buf_cp_in(buffer, buffer_size);
+      retrun = decrypt(buffer, buffer_size);
+      if(retrun != L4_EOK)
+	   return retrun;
+      ios << L4::Ipc::buf_cp_out(buffer, buffer_size);
+      return L4_EOK;
+    default:
+      return -L4_ENOSYS;
+    };
+}
+	int Encryption_server::encrypt(char *buffer, unsigned long buffer_size){
+	if(buffer == NULL && buffer_size == 0)
+		return -L4_EINVAL;
+	
+	for(unsigned long i=0; i<buffer_size; i++)
+		buffer[buffer_size-i-1] = backverse(buffer[i]);
 }
 
-int Encryption_server::dispatch_decrypt(L4::Ipc::Iostream &ios) {
-
-unsigned char *buf = NULL;
-unsigned long buf_len = 0;
-
-ios >> L4::Ipc::Buf_in<unsigned char>(buf, buf_len);
-if(buf_len > (L4_UTCB_GENERIC_DATA_SIZE-2)*sizeof(l4_umword_t))
-return -L4_EBADPROTO;
-int ret = decrypt(buf, buf_len);
-if(ret != L4_EOK)
-return ret;
-ios << L4::Ipc::Buf_cp_out<unsigned char>(buf, buf_len); // XXX depends on << implementation
-return ret;
+	int Encryption_server::decrypt(char *buffer, unsigned long buffer_size){
+	if(buffer == NULL && buffer_size == 0)
+		return -L4_EINVAL;
+	
+	for(unsigned long i=0; i<buffer_size; i++)
+		buffer[buffer_size-i-1] = backverse(buffer[i]);
 }
 
-int Encryption_server::encrypt(unsigned char *inout_data, unsigned long size) {
+ char Encryption_server::backverse(const char c){
+      if (islower(c))
+	return ('z'-c+'a');
+      if (isupper(c))
+	return ('Z'-c+'A');
+      else
+	return c;
+	}
 
-if(inout_data == NULL && size == 0)
-return -L4_EINVAL;
-
-for(unsigned long i=0; i<size; i++)
-inout_data[i] ^= this->key();
-return L4_EOK;
-}
-
-int Encryption_server::decrypt(unsigned char *inout_data, unsigned long size) {
-
-return this->encrypt(inout_data, size);
-}
-
-unsigned char Encryption_server::key() {
-
-#define ENCRYPTION_SERVER_KEY 0x55
-return ENCRYPTION_SERVER_KEY;
-#undef ENCRYPTION_SERVER_KEY
-}
-
-int Encryption_server::dispatch(l4_umword_t, L4::Ipc::Iostream &ios) {
-
-l4_msgtag_t t;
-ios >> t;
-
-
-if (t.label() != Protocol::Encryption)
-return -L4_EBADPROTO;
-
-L4::Opcode opcode;
-ios >> opcode;
-
-switch(opcode) {
-case Opcode::func_encrypt:
-return dispatch_encrypt(ios);
-case Opcode::func_decrypt:
-return dispatch_decrypt(ios);
-default:
-return -L4_ENOSYS;
-}
-}
+int
+main()
+{
+  static Encryption_server encr;
 
 
 
-int main() {
+  // Register calculation server
+  if (!server.registry()->register_obj(&encr, "crypt_server").is_valid())
+    {
+      printf("Something not let me doing server, is there 'encryption_server' in the caps table?\n");
+      return 1;
+    }
 
-static Encryption_server encr;
+  printf("Welcome to dat Encryption server!\n"
+         "I am wonderous magnificient part of program, doing magic.\n");
 
-if (!server.registry()->register_obj(&encr, ENCRYPTION_SERVER_NAME).is_valid()) {
-printf("Could not register service, is there a \'%s\' in the caps table?\n", ENCRYPTION_SERVER_NAME);
-return 1;
-}
+  // Wait for client requests
+  server.loop();
 
-printf("Welcome to the encryption server!\n");
-
-server.loop();
-
-return 0;
+  return 0;
 }
