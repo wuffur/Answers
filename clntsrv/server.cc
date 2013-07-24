@@ -75,7 +75,7 @@ int Encryption_server::encrypt(char *buffer, unsigned long buffer_size){
        		temp[i]	= buffer[i];
 
 	for(unsigned long i=0; i<buffer_size; i++)
-		buffer[buffer_size-i-1] = backverse('a');//backverse(temp[i]);
+		buffer[buffer_size-i-1] = backverse(temp[i]);
 	return 0;
 }
 
@@ -87,7 +87,7 @@ int Encryption_server::decrypt(char *buffer, unsigned long buffer_size){
        		temp[i]	= buffer[i];
 
 	for(unsigned long i=0; i<buffer_size; i++)
-		buffer[buffer_size-i-1] = backverse('a');//backverse(temp[i]);
+		buffer[buffer_size-i-1] = backverse(temp[i]);
 	return 0;
 }
  char Encryption_server::backverse(const char c){
