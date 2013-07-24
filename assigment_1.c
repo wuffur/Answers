@@ -3,8 +3,8 @@
 #include <l4/sys/vcon.h>
 
 /** #include <string.h>
-**  #include <unistd.h>
-**  #include <stdio.h>  */
+**  #include <unistd.h> */
+#include <stdio.h>  
 
 int
 main(void)
