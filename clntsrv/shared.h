@@ -9,9 +9,6 @@
 
 #pragma once
 
-#define ENCRYPTION_SERVER_NAME "encr_server"
-
-
 namespace Opcode {
 enum Opcodes {
 func_encrypt, func_decrypt
