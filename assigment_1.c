@@ -1,10 +1,11 @@
 #include <l4/re/env.h>
 #include <l4/sys/ipc.h>
 #include <l4/sys/vcon.h>
+#include <l4/sys/err.h>
 
 /** #include <string.h>
-**  #include <unistd.h> */
-#include <stdio.h>  
+**  #include <unistd.h> 
+** #include <stdio.h>  */
 
 int
 main(void)
